@@ -1,6 +1,10 @@
 time_left = 0
 timer = 0
 modstorage = core.get_mod_storage()
+d_c = modstorage:get_string("donate_counter")
+s_o_c_u_u = modstorage:get_string("show_other_ctf_util_users")
+c_m = modstorage:get_string("custom_message")
+i_l = modstorage:get_string("ignore_list")
 
 function format_time(seconds)
     local minutes = math.floor(seconds / 60)
@@ -18,7 +22,7 @@ function say(message)
 end
 
 function check_ignorelist(message)
-    local ignorelist = (modstorage:get_string("ignore_list")):split(",")
+    local ignorelist = (i_l):split(",")
     for i = 1, #ignorelist do
         search_string = "<" .. ignorelist[i] .. ">"
         if string.find(message, search_string) then
@@ -56,7 +60,7 @@ minetest.register_chatcommand("block", {
     func = function(message)
         if message then
             local found_name = false
-            local str = modstorage:get_string("ignore_list")
+            local str = i_l
             local str_table = str:split(",")
             for i, name in ipairs(str_table) do
                 if name == message then
@@ -71,6 +75,7 @@ minetest.register_chatcommand("block", {
             local temp_data = modstorage:get_string("ignore_list")
             local temp_data = temp_data .. "," .. message
             modstorage:set_string("ignore_list", temp_data)
+            i_l = modstorage:get_string("ignore_list")
             print("Added " .. message .. " to your ignore list.")
             return
         end
@@ -84,7 +89,7 @@ minetest.register_chatcommand("unblock", {
     func = function(message)
         if message then
             local found_name = false
-            local str = modstorage:get_string("ignore_list")
+            local str = i_l
             local str_table = str:split(",")
             for i, name in ipairs(str_table) do
                 if name == message then
@@ -96,6 +101,7 @@ minetest.register_chatcommand("unblock", {
             if found_name then
                 local new_str = table.concat(str_table, ",")
                 modstorage:set_string("ignore_list", new_str)
+                i_l = modstorage:get_string("ignore_list")
                 print("Removed " .. message .. " from your ignore list.")
             else
                 print(message .. " isn't ignored!")
@@ -110,7 +116,7 @@ minetest.register_chatcommand("list_blocked", {
     params = "",
     description = "List all blocked players.",
     func = function(message)
-        local str = modstorage:get_string("ignore_list")
+        local str = i_l
         local str_table = str:split(",")
         local output_string = ""
         for i, name in ipairs(str_table) do
@@ -128,7 +134,7 @@ minetest.register_chatcommand("toggle_donate_counter", {
     params = "",
     description = "Toggle the donate counter.",
     func = function(message)
-        current = modstorage:get_string("donate_counter")
+        current = d_c
         if current == "true" then
             modstorage:set_string("donate_counter", "false")
             minetest.localplayer:hud_remove(donate_number)
@@ -143,6 +149,7 @@ minetest.register_chatcommand("toggle_donate_counter", {
             msg = "enabled."
         end
         print("The donate counter is now " .. msg)
+        d_c = modstorage:get_string("donate_counter")
     end
 })
 
@@ -150,7 +157,7 @@ minetest.register_chatcommand("toggle_show_ctf_util", {
     params = "",
     description = "Toggle showing other CTF util users",
     func = function(message)
-        current = modstorage:get_string("show_other_ctf_util_users")
+        current = s_o_c_u_u
         if current == "true" then
             modstorage:set_string("show_other_ctf_util_users", "false")
         else
@@ -162,6 +169,7 @@ minetest.register_chatcommand("toggle_show_ctf_util", {
             msg = "Other players using CTF Util will now be highlighted."
         end
         print(msg)
+        s_o_c_u_u = modstorage:get_string("show_other_ctf_util_users")
     end
 })
 
@@ -171,6 +179,7 @@ minetest.register_chatcommand("set_message", {
     func = function(message)
         modstorage:set_string("custom_message", message)
         print("Players will now have " .. message .. " added to the beginning of their name.")
+        c_m = modstorage:get_string("custom_message")
     end
 })
 
@@ -192,35 +201,46 @@ minetest.register_on_receiving_chat_message(function(message)
             time_left = 600
         end
         if handled == false then
-            if modstorage:get_string("show_other_ctf_util_users") == "true" then
+            if s_o_c_u_u == "true" then
                 if string.find(message, string.char(127)) then
-                    custom = modstorage:get_string("custom_message")
+                    custom = d_c
                     print(minetest.colorize("#FF5000", custom .. " ") .. message)
                     return true
                 end
             end
         end
+        
         return(handled)
     end
 end)
 
 minetest.register_on_mods_loaded(function()
-    if not modstorage:get_string("donate_counter") == "true" and not modstorage:get_string("donate_counter") == "false" then
+    if modstorage:get_string("donate_counter") ~= "true" and modstorage:get_string("donate_counter") ~= "false" then
         modstorage:set_string("donate_counter", "true")
     end
-    if not modstorage:get_string("show_other_ctf_util_users") == "true" and not modstorage:get_string("show_other_ctf_util_users") == "false" then
+    if modstorage:get_string("show_other_ctf_util_users") ~= "true" and modstorage:get_string("show_other_ctf_util_users") ~= "false" then
         modstorage:set_string("show_other_ctf_util_users", "true")
     end
     if modstorage:get_string("custom_message") == "" then
-        modstorage:set_string("custom_message", "CTF Util")
+        modstorage:set_string("custom_message", "CTF_Util")
     end
+    if modstorage:get_string("initialized") ~= "true" then
+        modstorage:set_string("initialized", "true")
+        modstorage:set_string("custom_message", "CTF_Util")
+    end
+
+    d_c = modstorage:get_string("donate_counter")
+    s_o_c_u_u = modstorage:get_string("show_other_ctf_util_users")
+    c_m = modstorage:get_string("custom_message")
+    i_l = modstorage:get_string("ignore_list")
+
     minetest.after(2, function()
-        print(minetest.colorize("#00FFFF", "The available commands are: .help all .set_message .block, .unblock .toggle_donate_counter .toggle_show_ctf_util"))
+        print(minetest.colorize("#00FFFF", "The available commands are: .help all .set_message .block, .unblock .toggle_donate_counter .toggle_show_ctf_util .list_blocked"))
     end)
 end)
 
 minetest.register_globalstep(function(dtime)
-    if modstorage:get_string("donate_counter") == "true" then
+    if d_c == "true" then
         donate_counter(dtime)
     end
 end)
